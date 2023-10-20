@@ -5,6 +5,19 @@ from repository import db_get_single, db_get_all, db_delete, db_update, db_creat
 
 class ShippingShipsView():
 
+    def create(self, handler, ship_data):
+        sql = """
+        INSERT INTO ship (name, hauler_id)
+        VALUES (?, ?)
+        """
+        db_new_id = db_create(
+            sql, (ship_data['name'], ship_data['hauler_id']))
+
+        if db_new_id:
+            return handler.response(json.dumps({"id": db_new_id, "name": ship_data['name'], "hauler_id": ship_data['hauler_id']}), status.HTTP_201_SUCCESS_CREATED.value)
+        else:
+            return handler.response("Failed to create ship", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value)
+
     def get(self, handler, pk):
         if pk != 0:
             sql = "SELECT s.id, s.name, s.hauler_id FROM Ship s WHERE s.id = ?"
