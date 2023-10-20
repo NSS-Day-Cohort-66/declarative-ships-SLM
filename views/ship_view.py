@@ -3,6 +3,7 @@ import json
 from nss_handler import status
 from repository import db_get_single, db_get_all, db_delete, db_update, db_create
 
+
 class ShippingShipsView():
 
     def get(self, handler, pk):
@@ -30,6 +31,24 @@ class ShippingShipsView():
             return handler.response("", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value)
 
     def update(self, handler, ship_data, pk):
+        sql = """
+        UPDATE Ship
+        SET
+            name = ?,
+            hauler_id = ?
+        WHERE id = ?
+        """
+        number_of_rows_updated = db_update(
+            sql,
+            (ship_data['name'], ship_data['hauler_id'], pk)
+        )
+
+        if number_of_rows_updated > 0:
+            return handler.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
+        else:
+            return handler.response("", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value)
+
+    def create(self, handler, ship_data, pk):
         sql = """
         UPDATE Ship
         SET
