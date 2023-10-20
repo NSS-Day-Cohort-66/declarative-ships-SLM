@@ -1,8 +1,20 @@
 import json
 from nss_handler import status
-from repository import db_get_single, db_get_all, db_delete, db_update
+from repository import db_get_single, db_get_all, db_delete, db_update, db_create
 
 class HaulerView():
+    def create(self, handler, hauler_data):
+        sql = """
+        INSERT INTO HAULER (name, dock_id)
+        VALUES (?, ?)
+        """
+        db_new_id = db_create(
+            sql, (hauler_data['name'], hauler_data['dock_id']))
+
+        if db_new_id:
+            return handler.response(json.dumps({"id": db_new_id, "name": hauler_data['name'], "dock_id": hauler_data['dock_id']}), status.HTTP_201_SUCCESS_CREATED.value)
+        else:
+            return handler.response("Failed to create hauler", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value)
 
     def get(self, handler, pk):
         if pk != 0:
