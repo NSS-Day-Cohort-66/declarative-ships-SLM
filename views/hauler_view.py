@@ -2,9 +2,11 @@ import json
 from nss_handler import status
 from repository import db_get_single, db_get_all, db_delete, db_update
 
+
 class HaulerView():
 
     def get(self, handler, pk):
+
         if pk != 0:
             sql = "SELECT h.id, h.name, h.dock_id FROM Hauler h WHERE h.id = ?"
             query_results = db_get_single(sql, pk)
@@ -21,7 +23,8 @@ class HaulerView():
             return handler.response(serialized_haulers, status.HTTP_200_SUCCESS.value)
 
     def delete(self, handler, pk):
-        number_of_rows_deleted = db_delete("DELETE FROM Hauler WHERE id = ?", pk)
+        number_of_rows_deleted = db_delete(
+            "DELETE FROM Hauler WHERE id = ?", pk)
 
         if number_of_rows_deleted > 0:
             return handler.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
