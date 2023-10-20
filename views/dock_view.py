@@ -1,8 +1,22 @@
 import json
 from nss_handler import status
-from repository import db_get_single, db_get_all, db_delete, db_update
+from repository import db_get_single, db_get_all, db_delete, db_update, db_create
+
 
 class DocksView():
+
+    def create(self, handler, dock_data):
+        sql = """
+        INSERT INTO DOCK (location, capacity)
+        VALUES (?, ?)
+        """
+        db_new_id = db_create(
+            sql, (dock_data['location'], dock_data['capacity']))
+
+        if db_new_id:
+            return handler.response(json.dumps({"id": db_new_id, "location": dock_data['location'], "capacity": dock_data['capacity']}), status.HTTP_201_SUCCESS_CREATED.value)
+        else:
+            return handler.response("Failed to create dock", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value)
 
     def get(self, handler, pk):
         if pk != 0:
@@ -20,7 +34,8 @@ class DocksView():
             return handler.response(serialized_hauler, status.HTTP_200_SUCCESS.value)
         else:
 
-            query_results = db_get_all("SELECT d.id, d.location, d.capacity FROM Dock d")
+            query_results = db_get_all(
+                "SELECT d.id, d.location, d.capacity FROM Dock d")
             haulers = [dict(row) for row in query_results]
             serialized_haulers = json.dumps(haulers)
 
