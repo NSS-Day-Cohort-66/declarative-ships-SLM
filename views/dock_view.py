@@ -2,7 +2,16 @@ import json
 from nss_handler import status
 from repository import db_get_single, db_get_all, db_delete, db_update
 
+
 class DocksView():
+
+    def create(self, dock_data):
+        sql = """
+        INSERT INTO DOCK (location, capacity)
+        VALUES (?, ?)
+        """
+        db_new_id = db_create(
+            sql, (dock_data['location'], dock_data['capacity']))
 
     def get(self, handler, pk):
         if pk != 0:
@@ -20,7 +29,8 @@ class DocksView():
             return handler.response(serialized_hauler, status.HTTP_200_SUCCESS.value)
         else:
 
-            query_results = db_get_all("SELECT d.id, d.location, d.capacity FROM Dock d")
+            query_results = db_get_all(
+                "SELECT d.id, d.location, d.capacity FROM Dock d")
             haulers = [dict(row) for row in query_results]
             serialized_haulers = json.dumps(haulers)
 
