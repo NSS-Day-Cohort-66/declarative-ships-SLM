@@ -18,64 +18,44 @@ class HaulerView():
         else:
             return handler.response("Failed to create hauler", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value)
 
-    def get(self, handler, pk, url):
+    def get(self, handler, pk):
+        # Parse the URL
+        url = handler.parse_url(handler.path)
+
         if pk != 0:
-            if "_expand" in url:
-                sql = """
-                    SELECT
-                        h.id,
-                        h.name,
-                        h.dock_id,
-                        d.id dockId,
-                        d.location dockLocation,
-                        d.capacity
-                    FROM Hauler h
-                    JOIN Dock d
-                    ON h.dock_id = d.id
-                    WHERE h.id = ?
-                """
-                query_results = db_get_single(sql, pk)
-                query_result = dict(query_results)
-                dock = {
-                    "id": query_result['dockId'],
-                    "location": query_result['dockLocation'],
-                    "capacity": query_result['capacity']
-                }
-                hauler = {
-                    "id": query_result['id'],
-                    "name": query_result['name'],
-                    "dock_id": query_result['dock_id'],
-                    "dock": dock
-                }
-                serialized_hauler = json.dumps(dict(hauler))
-                return handler.response(serialized_hauler, status.HTTP_200_SUCCESS.value)
-
-            else:
-                sql = """
-                    SELECT
-                        h.id,
-                        h.name,
-                        h.dock_id
-                    FROM Hauler h
-                    WHERE h.id = ?
-                """
-                query_results = db_get_single(sql, pk)
-                query_result = dict(query_results)
-                hauler = {
-                    "id": query_result['id'],
-                    "name": query_result['name'],
-                    "dock_id": query_result['dock_id'],
-                }
-                serialized_hauler = json.dumps(dict(hauler))
-                return handler.response(serialized_hauler, status.HTTP_200_SUCCESS.value)
-
+            hauler = self.get_hauler_details(pk, url.get("_expand"))
+            return handler.response(json.dumps(hauler), status.HTTP_200_SUCCESS.value)
         else:
-            sql = "SELECT h.id, h.name, h.dock_id FROM Hauler h"
-            query_results = db_get_all(sql)
-            haulers = [dict(row) for row in query_results]
-            serialized_haulers = json.dumps(haulers)
+            haulers = self.get_all_haulers(url.get("_expand"))
+            return handler.response(json.dumps(haulers), status.HTTP_200_SUCCESS.value)
 
-            return handler.response(serialized_haulers, status.HTTP_200_SUCCESS.value)
+    def get_hauler_details(self, pk, expand_option):
+        sql = "SELECT h.id, h.name, h.dock_id FROM Hauler h WHERE h.id = ?"
+        query_results = db_get_single(sql, pk)
+        hauler = dict(query_results)
+
+        if expand_option == 'dock':
+            self.expand_hauler_with_dock_info(hauler)
+
+        return hauler
+
+    def get_all_haulers(self, expand_option):
+        sql = "SELECT h.id, h.name, h.dock_id FROM Hauler h"
+        query_results = db_get_all(sql)
+        haulers = [dict(row) for row in query_results]
+
+        if expand_option == 'dock':
+            for hauler in haulers:
+                self.expand_hauler_with_dock_info(hauler)
+
+        return haulers
+
+    def expand_hauler_with_dock_info(self, hauler):
+        dock_id = hauler.get('dock_id')
+        if dock_id:
+            dock_sql = "SELECT d.id, d.location, d.capacity FROM Dock d WHERE d.id = ?"
+            dock_info = db_get_single(dock_sql, dock_id)
+            hauler['dock'] = dict(dock_info)
 
     def delete(self, handler, pk):
         number_of_rows_deleted = db_delete(
