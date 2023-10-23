@@ -13,6 +13,7 @@ class status(Enum):
     HTTP_405_UNSUPPORTED_METHOD = 405
     HTTP_500_SERVER_ERROR = 500
 
+
 class HandleRequests(BaseHTTPRequestHandler):
 
     def response(self, body, code):
@@ -52,6 +53,9 @@ class HandleRequests(BaseHTTPRequestHandler):
             query = parse_qs(parsed_url.query)
             url_dictionary["query_params"] = query
 
+        if "_expand" in url_dictionary["query_params"]:
+            url_dictionary["_expand"] = url_dictionary["query_params"]["_expand"][0]
+
         try:
             pk = int(path_params[2])
             url_dictionary["pk"] = pk
@@ -69,6 +73,8 @@ class HandleRequests(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
-        self.send_header('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept')
+        self.send_header('Access-Control-Allow-Methods',
+                         'GET, POST, PUT, DELETE')
+        self.send_header('Access-Control-Allow-Headers',
+                         'X-Requested-With, Content-Type, Accept')
         self.end_headers()
