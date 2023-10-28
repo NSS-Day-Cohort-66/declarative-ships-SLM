@@ -23,19 +23,19 @@ class HaulerView():
         url = handler.parse_url(handler.path)
 
         if pk != 0:
-            hauler = self.get_hauler_details(pk, url.get("_expand"))
+            hauler = self.get_single_hauler(pk, url.get("_expand"))
             return handler.response(json.dumps(hauler), status.HTTP_200_SUCCESS.value)
         else:
             haulers = self.get_all_haulers(url.get("_expand"))
             return handler.response(json.dumps(haulers), status.HTTP_200_SUCCESS.value)
 
-    def get_hauler_details(self, pk, expand_option):
+    def get_single_hauler(self, pk, expand_option):
         sql = "SELECT h.id, h.name, h.dock_id FROM Hauler h WHERE h.id = ?"
         query_results = db_get_single(sql, pk)
         hauler = dict(query_results)
 
         if expand_option == 'dock':
-            self.expand_hauler_with_dock_info(hauler)
+            self.get_expanded_dock_info(hauler)
 
         return hauler
 
@@ -46,13 +46,13 @@ class HaulerView():
 
         if expand_option == 'dock':
             for hauler in haulers:
-                self.expand_hauler_with_dock_info(hauler)
+                self.get_expanded_dock_info(hauler)
 
         return haulers
 
-    def expand_hauler_with_dock_info(self, hauler):
+    def get_expanded_dock_info(self, hauler):
         dock_id = hauler.get('dock_id')
-        if dock_id:
+        if dock_id != 0:
             dock_sql = "SELECT d.id, d.location, d.capacity FROM Dock d WHERE d.id = ?"
             dock_info = db_get_single(dock_sql, dock_id)
             hauler['dock'] = dict(dock_info)

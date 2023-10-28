@@ -20,20 +20,41 @@ class ShippingShipsView():
             return handler.response("Failed to create ship", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value)
 
     def get(self, handler, pk):
+        url = handler.parse_url(handler.path)
+
         if pk != 0:
-            sql = "SELECT s.id, s.name, s.hauler_id FROM Ship s WHERE s.id = ?"
-            query_results = db_get_single(sql, pk)
-            serialized_hauler = json.dumps(dict(query_results))
-
-            return handler.response(serialized_hauler, status.HTTP_200_SUCCESS.value)
+            ship = self.get_single_ship(pk, url.get("_expand"))
+            return handler.response(json.dumps(ship), status.HTTP_200_SUCCESS.value)
         else:
+            ships = self.get_all_ships(url.get("_expand"))
+            return handler.response(json.dumps(ships), status.HTTP_200_SUCCESS.value)
+        
+    def get_single_ship(self, pk, expand_option):
+        sql = "SELECT s.id, s.name, s.hauler_id FROM Ship s WHERE s.id = ?"
+        query_results = db_get_single(sql, pk)
+        ship = dict(query_results)
 
-            sql = "SELECT s.id, s.name, s.hauler_id FROM Ship s"
-            query_results = db_get_all(sql)
-            haulers = [dict(row) for row in query_results]
-            serialized_haulers = json.dumps(haulers)
+        if expand_option == 'hauler':
+            self.get_expanded_hauler_info(ship)
 
-            return handler.response(serialized_haulers, status.HTTP_200_SUCCESS.value)
+        return ship
+        
+    def get_all_ships(self, expand_option):
+        sql = "SELECT s.id, s.name, s.hauler_id FROM Ship s"
+        query_results = db_get_all(sql)
+        ships = [dict(row) for row in query_results]
+
+        if expand_option == 'hauler':
+            for ship in ships:
+                self.get_expanded_hauler_info(ship)
+
+        return ships    
+    def get_expanded_hauler_info(self, ship):
+        hauler_id = ship.get('hauler_id')
+        if hauler_id != 0:
+            hauler_sql = "SELECT h.id, h.name FROM Hauler h WHERE h.id = ?"
+            hauler_info = db_get_single(hauler_sql, hauler_id)
+            ship['hauler'] = dict(hauler_info)
 
     def delete(self, handler, pk):
         number_of_rows_deleted = db_delete("DELETE FROM Ship WHERE id = ?", pk)

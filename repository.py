@@ -18,21 +18,30 @@ def db_get_single(sql, pk) -> sqlite3.Row:
         return db_cursor.fetchone()
 
 
-def db_get_all(sql) -> list:
-    """Retrieve all rows from a database table
+def db_get_all(sql, param=None) -> list:
+    """Retrieve rows from a database table with optional parameters.
 
     Args:
         sql (string): SQL string
+        params (tuple, optional): A tuple of parameters to be passed to the SQL query.
 
     Returns:
-        list: List of sqlite3.Row objects
+        list: List of dictionaries representing the query results.
     """
     with sqlite3.connect("./shipping.db") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
-        db_cursor.execute(sql)
-        return db_cursor.fetchall()
 
+        if param:
+            db_cursor.execute(sql, (param,))
+        else:
+            db_cursor.execute(sql)
+
+        results = db_cursor.fetchall()
+
+        # Convert the results to a list of dictionaries
+        result_dicts = [dict(row) for row in results]
+        return result_dicts
 
 def db_delete(sql, pk) -> int:
     """Delete a row from the database

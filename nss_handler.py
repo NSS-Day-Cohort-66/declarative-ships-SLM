@@ -55,6 +55,8 @@ class HandleRequests(BaseHTTPRequestHandler):
 
         if "_expand" in url_dictionary["query_params"]:
             url_dictionary["_expand"] = url_dictionary["query_params"]["_expand"][0]
+        if "_embed" in url_dictionary["query_params"]:
+            url_dictionary["_embed"] = url_dictionary["query_params"]["_embed"][0]
 
         try:
             pk = int(path_params[2])
