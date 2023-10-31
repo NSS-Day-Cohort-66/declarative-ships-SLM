@@ -57,4 +57,4 @@ INSERT INTO `Ship` VALUES (null, "Kunde", 6);
 INSERT INTO `Ship` VALUES (null, "Hermiston", 5);
 -- End block
 
-SELECT h.id, h.name, h.dock_id FROM Hauler h WHERE h.dock_id = 2
+SELECT s.id, s.name, s.hauler_id FROM Ship s
